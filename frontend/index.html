@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0d0b">
+<title>Dosya — Tek Kutu OSINT</title>
+<style>
+:root{
+  --bg:#0e0d0b; --surface:#161411; --surface2:#1c1915;
+  --line:#2b2620; --ink:#e8e2d4; --muted:#a39e8f; --faint:#8d8778;
+  --amber:#d9a441; --amber-ink:#14100a; --red:#c2452d; --green:#7d9b6a;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --rad:8px;
+}
+*{box-sizing:border-box}
+html{scrollbar-color:var(--line) var(--bg);-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;font-size:16px;line-height:1.5;
+  font-variant-numeric:tabular-nums;padding-bottom:env(safe-area-inset-bottom)}
+::selection{background:var(--amber);color:var(--amber-ink)}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;border:2px solid var(--bg)}
+a{color:var(--amber);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px}
+/* yapışkan arama */
+.top{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:10px 0 calc(10px + env(safe-area-inset-top));padding-top:calc(10px + env(safe-area-inset-top))}
+.top h1{font-family:var(--serif);font-weight:400;font-size:19px;margin:0 0 8px}
+.top h1 span{font-family:var(--mono);font-size:12px;color:var(--faint);display:block;letter-spacing:.04em}
+form.search{display:flex;gap:8px}
+form.search input{flex:1;min-width:0;background:#0b0a09;border:1px solid var(--line);color:var(--ink);
+  padding:13px 12px;border-radius:var(--rad);font-size:16px;caret-color:var(--amber)}
+form.search input::placeholder{color:var(--faint)}
+form.search input:focus{border-color:var(--amber);outline:none}
+button.go{background:var(--amber);color:var(--amber-ink);border:0;border-radius:var(--rad);
+  min-width:96px;min-height:50px;font-weight:700;font-size:16px;cursor:pointer}
+button.go:active{transform:scale(.97)}
+button.go:disabled{opacity:.5}
+details.city{margin-top:8px}
+details.city summary{font-size:14px;color:var(--muted);cursor:pointer;min-height:44px;display:inline-flex;align-items:center}
+details.city input{width:100%;margin-top:6px;background:#0b0a09;border:1px solid var(--line);color:var(--ink);
+  padding:13px 12px;border-radius:var(--rad);font-size:16px}
+/* ilerleme */
+.progress{display:none;margin:14px 0 0}
+.progress.on{display:block}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;width:30%;background:var(--amber);border-radius:2px;animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{0%{margin-left:-30%}100%{margin-left:100%}}
+.ptext{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:8px}
+/* özet */
+.dossier{border:1px solid var(--amber);background:var(--surface);border-radius:var(--rad);padding:16px;margin-top:14px}
+.dossier h2{font-family:var(--serif);font-weight:400;font-size:23px;margin:8px 0 2px;overflow-wrap:anywhere}
+.dossier .sub{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.dossier .warn{background:#2a1210;border:1px solid var(--red);color:#e8a08f;border-radius:6px;
+  padding:12px;font-size:14px;margin-top:10px}
+.dossier .ppl{margin-top:10px;font-size:14px;color:var(--muted)}
+.dossier .ppl b{color:var(--ink);font-weight:600}
+.stamp{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  border:1.5px solid var(--amber);color:var(--amber);border-radius:4px;padding:3px 8px}
+.stamp.red{border-color:var(--red);color:var(--red)}
+.stamp.green{border-color:var(--green);color:var(--green)}
+.stamp.gray{border-color:var(--faint);color:var(--muted)}
+/* deliller */
+h3.sec{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--faint);margin:20px 0 6px}
+@keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+details.ev{background:var(--surface);border:1px solid var(--line);border-radius:var(--rad);
+  margin:8px 0;animation:rowIn .45s cubic-bezier(.16,1,.3,1) both}
+details.ev summary{list-style:none;display:flex;gap:10px;align-items:flex-start;padding:14px;cursor:pointer;min-height:56px}
+details.ev summary::-webkit-details-marker{display:none}
+details.ev summary .n{font-family:var(--mono);font-size:12px;color:var(--faint);padding-top:3px;min-width:26px}
+details.ev summary .t{flex:1;min-width:0;font-size:15px;overflow-wrap:anywhere}
+details.ev summary .t small{display:block;font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:2px}
+details.ev .body{padding:0 14px 14px 50px;font-size:14px;color:var(--muted)}
+details.ev .body .why{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:6px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 18px;
+  background:transparent;border:1.5px solid var(--amber);color:var(--amber);border-radius:var(--rad);
+  font-weight:600;font-size:15px;margin-top:10px;text-decoration:none}
+a.btn:active{background:var(--amber);color:var(--amber-ink)}
+details.manual{border:1px dashed var(--line);border-radius:var(--rad);margin-top:14px}
+details.manual summary{padding:14px;cursor:pointer;min-height:52px;font-size:14px;color:var(--muted)}
+details.manual ul{margin:0;padding:0 16px 14px 36px;font-size:14px;color:var(--muted)}
+details.manual li{margin:8px 0}
+.empty{border:1px solid var(--line);border-radius:var(--rad);padding:36px 20px;text-align:center;color:var(--muted);margin-top:14px}
+.empty p{font-family:var(--serif);font-size:19px;color:var(--ink);margin:0 0 6px}
+.empty small{font-size:13.5px}
+.err{background:#2a1210;border:1px solid var(--red);color:#e8a08f;border-radius:6px;padding:14px;margin-top:14px;font-size:14px}
+footer{color:var(--faint);font-family:var(--mono);font-size:12px;padding:24px 0 40px}
+@media(min-width:640px){.wrap{padding:0 22px}button.go{min-width:120px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Dosya</h1>
+    <form class="search" id="f">
+      <input id="q" name="q" placeholder="Ad Soyad" autocomplete="off" enterkeyhint="search">
+      <button class="go" id="go" type="submit">Tara</button>
+    </form>
+    <details class="city"><summary>Şehir ekle (isteğe bağlı)</summary>
+      <input id="city" placeholder="Bakü / İstanbul" autocomplete="off">
+    </details>
+  </div>
+  <div class="progress" id="pg"><div class="bar"><i></i></div><div class="ptext" id="pt">Taranıyor…</div></div>
+  <div id="out"><div class="empty"><p>Henüz arama yok.</p></div></div>
+  <footer>Herkese açık kaynaklardan derlenir.</footer>
+</div>
+<script>
+const f=document.getElementById('f'),q=document.getElementById('q'),city=document.getElementById('city'),
+      go=document.getElementById('go'),out=document.getElementById('out'),
+      pg=document.getElementById('pg'),pt=document.getElementById('pt');
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const cls=l=>l==='hit'?'red':(l==='candidate'?'':'gray');
+const steps=['Resmî kayıtlar taranıyor','Akademi ve şirket taranıyor','Sosyal ağlar taranıyor','Toparlanıyor'];
+let timer=null;
+f.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const name=q.value.trim();if(name.length<2){q.focus();return}
+  go.disabled=true;out.innerHTML='';pg.classList.add('on');
+  let i=0;pt.textContent=steps[0];
+  timer=setInterval(()=>{i=(i+1)%steps.length;pt.textContent=steps[i]},6000);
+  try{
+    const r=await fetch(`/api/search?name=${encodeURIComponent(name)}&city=${encodeURIComponent(city.value.trim())}`);
+    if(!r.ok)throw new Error('sunucu '+r.status);
+    const d=await r.json(),p=d.profile;
+    clearInterval(timer);pg.classList.remove('on');go.disabled=false;
+    const lvl=p.strong>0?'red':(p.candidates>0?'':'gray');
+    let html=`<div class="dossier"><span class="stamp ${lvl}">${p.strong>0?p.strong+' güçlü bulgu':p.candidates+' aday · zayıf dosya'}</span>
+      ${p.warning?`<div class="warn">${esc(p.warning)}</div>`:''}
+      <h2>${esc(p.query)}</h2>
+      <div class="sub">güven ${p.confidence} · ${p.total_hits} delil · ${Math.round(p.duration_ms/1000)}sn · ${p.sources_ok.length} kaynak</div>`;
+    if(p.people&&p.people.length>1)
+      html+=`<div class="ppl">Olası kişiler: ${p.people.slice(0,4).map(x=>`<b>${esc(x.top)}</b> (${x.count})`).join(' · ')}</div>`;
+    html+='</div><h3 class="sec">Delil cetveli</h3>';
+    const rows=d.hits.filter(h=>h.kind!=='guide');
+    if(!rows.length)html+='<div class="empty"><p>Kayıt bulunamadı.</p></div>';
+    rows.forEach((m,idx)=>{
+      html+=`<details class="ev" style="animation-delay:${Math.min(idx*30,900)}ms"><summary>
+        <span class="n">${String(idx+1).padStart(2,'0')}</span>
+        <span class="t">${esc(m.title)}<small>${esc(m.source)}${m.etype&&m.etype!=='person'?' · '+esc(m.etype):''}</small></span>
+        <span class="stamp ${cls(m.level)}">${esc(m.level||'')}</span></summary>
+        <div class="body">${esc(m.evidence_snippet||'')}<div class="why">${esc(m.why||'')}</div>
+        <a class="btn" href="${esc(m.source_url||'#')}" target="_blank" rel="noopener">Kaynağı aç</a></div></details>`;
+    });
+    const guides=d.hits.filter(h=>h.kind==='guide');
+    if(guides.length)
+      html+=`<details class="manual"><summary>Elle kontrol (${guides.length} kaynak giriş istiyor)</summary><ul>${
+        guides.slice(0,20).map(m=>`<li>${esc(m.title)} — <a href="${esc(m.source_url||'#')}" target="_blank" rel="noopener">aç</a></li>`).join('')}</ul></details>`;
+    out.innerHTML=html;
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){
+    clearInterval(timer);pg.classList.remove('on');go.disabled=false;
+    out.innerHTML=`<div class="err">Tarama başarısız: ${esc(err.message)}. Tekrar deneyin.</div>`;
+  }
+});
+</script>
+</body>
+</html>
